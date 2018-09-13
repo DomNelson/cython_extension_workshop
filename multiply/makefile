@@ -1,3 +1,4 @@
+## I need this to avoid using the anaconda compiler
 CC=/usr/bin/gcc
 
 default: pymultiply
@@ -13,11 +14,12 @@ pymultiply: setup.py pymultiply.pyx libmultiply.a
 libmultiply.a: multiply.o
 	ar rcs $@ $^
     
-## Compile C source code to create object file. '$<' is shorthand for the
-## first prerequisite (input), so this is equivalent to
-## `/usr/bin/gcc -c multiply.c`
+## Compile C source code to create object file. Flag -fPIC allows memory to
+## be dynamically allocated, which is needed for (importable) shared objects
+## on some systems. '$<' is shorthand for the first prerequisite (input),
+## so this is equivalent to `/usr/bin/gcc -c -fPIC multiply.c`
 multiply.o: multiply.c multiply.h
-	$(CC) -c $<
+	$(CC) -c -fPIC $<
 
 clean:
 	rm *.o *.a *.so
