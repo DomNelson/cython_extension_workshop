@@ -1,36 +1,6 @@
 import numpy as np
 cimport numpy as np
 
-## References the functions defined in the header of the C library
-cdef extern from "signal.h":
-    ## This sets the attributes accessible in the class attribute
-    ## of type node_t below
-    ctypedef struct node_t:
-        int ID
-        float weight
-
-    ctypedef struct ped_t:
-        pass
-
-    ## TODO: Double check int/uint casting here
-    void multiply_by_10_in_C(double arr[], unsigned int n)
-    void print_node(node_t node) 
-    ped_t *ped_alloc()
-    int ped_nodes_alloc(ped_t *ped, int num_nodes)
-    int free_ped(ped_t *ped)
-    int ped_load(ped_t *ped, int *inds, int *fathers, int *mothers, int num_inds)
-    int ped_print_nodes(ped_t *ped)
-    int ped_samples_alloc(ped_t *ped, int num_samples)
-    int ped_load_samples_from_idx(ped_t *ped, int *samples_idx, int *genotypes, int num_samples)
-    int ped_print_samples(ped_t *ped)
-
-    int ped_update_ancestor_weights_from_idx(ped_t *ped, int node_idx, double delta)
-    int ped_set_all_weights(ped_t *ped, double val)
-    double ped_get_node_weight_from_idx(ped_t *ped, int node_idx)
-    int update_parent_carrier_from_idx(ped_t *ped, int node_idx)
-    int update_parent_not_carrier_from_idx(ped_t *ped, int node_idx)
-
-    int ped_climb_step(ped_t *ped)
 
 def sort_ped(Ped):
     ninds = len(Ped.inds)
@@ -51,6 +21,39 @@ def sort_ped(Ped):
         sorted_ped_arr[i] = [ind, father_ix, mother_ix]
 
     return sorted_ped_arr
+
+
+## References the functions defined in the header of the C library
+cdef extern from "signal.h":
+    ## This sets the attributes accessible in the class attribute
+    ## of type node_t below
+    ctypedef struct node_t:
+        int ID
+        float weight
+
+    ctypedef struct ped_t:
+        pass
+
+    ## TODO: Double check int/uint casting here
+    void multiply_by_10_in_C(double arr[], unsigned int n)
+    void print_node(node_t node) 
+    ped_t *ped_alloc()
+    int ped_nodes_alloc(ped_t *ped, int num_nodes, int num_samples)
+    int free_ped(ped_t *ped)
+    int ped_load(ped_t *ped, int *inds, int *fathers, int *mothers, int num_inds)
+    int ped_print_nodes(ped_t *ped)
+    int ped_samples_alloc(ped_t *ped, int num_samples)
+    int ped_load_samples_from_idx(ped_t *ped, int *samples_idx, int *genotypes, int num_samples)
+    int ped_init_sample_weights(ped_t *ped)
+    int ped_print_samples(ped_t *ped)
+
+    int ped_set_all_weights(ped_t *ped, double val)
+    double ped_get_node_weight_from_idx(ped_t *ped, int node_idx)
+    int update_parent_carrier_from_idx(ped_t *ped, int node_idx, int sample_idx)
+    int update_parent_not_carrier_from_idx(ped_t *ped, int node_idx, int sample_idx)
+
+    int ped_climb_step(ped_t *ped)
+
 
 ## Functions alone can be used for operations that input
 ## and output only Python-compatible datatypes
@@ -77,7 +80,6 @@ cdef class cPed:
 
     def __cinit__(self):
         self.ped = ped_alloc()
-        # pass
 
 
     ## For this to work, the memory for the ped_t self.ped struct
@@ -107,9 +109,9 @@ cdef class cPed:
             raise MemoryError()
 
 
-    def load_ped(self, ped_arr):
+    def load_ped(self, ped_arr, num_samples):
         num_nodes = len(ped_arr)
-        ret = ped_nodes_alloc(self.ped, num_nodes)
+        ret = ped_nodes_alloc(self.ped, num_nodes, num_samples)
         if ret != 0:
             raise MemoryError()
 
@@ -147,20 +149,20 @@ cdef class cPed:
     cpdef print_samples(self):
         ped_print_samples(self.ped)
 
-    cpdef update_ancestor_weights(self, ind_idx, delta):
-        ped_update_ancestor_weights_from_idx(self.ped, ind_idx, delta)
-
     cpdef set_all_weights(self, val):
         ped_set_all_weights(self.ped, val)
 
     cpdef get_node_weight(self, ind_idx):
         return ped_get_node_weight_from_idx(self.ped, ind_idx)
 
-    cpdef update_parent_carrier(self, ind_idx):
-        update_parent_carrier_from_idx(self.ped, ind_idx)
+    cpdef update_parent_carrier(self, ind_idx, sample_idx):
+        update_parent_carrier_from_idx(self.ped, ind_idx, sample_idx)
 
-    cpdef update_parent_not_carrier(self, ind_idx):
-        update_parent_not_carrier_from_idx(self.ped, ind_idx)
+    cpdef update_parent_not_carrier(self, ind_idx, sample_idx):
+        update_parent_not_carrier_from_idx(self.ped, ind_idx, sample_idx)
 
     cpdef climb_step(self):
         ped_climb_step(self.ped)
+
+    cpdef init_sample_weights(self):
+        ped_init_sample_weights(self.ped)

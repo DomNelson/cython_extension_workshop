@@ -1,5 +1,4 @@
 import sys, os
-sys.path.append("../climb")
 import numpy as np
 import time
 
@@ -9,7 +8,10 @@ import pysignal
 
 # pedfile = os.path.expanduser('~/project/anc_finder/data/BALasc_probands1930.txt')
 # pedfile = os.path.expanduser('~/project/anc_finder/data/pedEx.txt')
-pedfile = os.path.expanduser('~/project/anc_finder/scripts/test/test_data/pedEx2.txt')
+pedfile = os.path.expanduser(
+        '~/project/anc_finder/scripts/test/test_data/pedEx2.txt')
+# pedfile = os.path.expanduser(
+#         '~/project/anc_finder/scripts/test/test_data/pedEx3.txt')
 P = ped.Pedigree(pedfile)
 
 ped_arr = pysignal.sort_ped(P)
@@ -20,17 +22,23 @@ samples = np.array(sample_idx, dtype=np.int32)
 print "Samples:", samples
 
 cP = pysignal.cPed()
-cP.load_ped(ped_arr)
+cP.load_ped(ped_arr, len(samples))
 cP.load_samples(samples)
 # cP.print_samples()
-for s in samples:
-    cP.update_ancestor_weights(s, 1)
+# for s in samples:
+#     cP.update_ancestor_weights(s, 1)
 # cP.print_nodes()
+cP.init_sample_weights()
 
 # cP.set_all_weights(1)
 cP.print_nodes()
-print cP.get_node_weight(P.ind_dict[14])
-
 cP.climb_step()
+cP.print_nodes()
+cP.climb_step()
+cP.print_nodes()
+cP.climb_step()
+cP.print_nodes()
+cP.climb_step()
+cP.print_nodes()
 
 print("Success!")
